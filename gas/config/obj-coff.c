@@ -1280,6 +1280,7 @@ coff_frob_symbol (symbolS *symp, int *punt)
 					   symbol_get_value_expression (weakp));
 	      symbol_set_frag (symp, symbol_get_frag (weakp));
 	      S_SET_SEGMENT (symp, S_GET_SEGMENT (weakp));
+	      S_SET_DATA_TYPE (symp, S_GET_DATA_TYPE (weakp));
 	    }
 	  else
 	    {

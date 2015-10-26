@@ -1,5 +1,10 @@
 2015-10-26  octavian purdila  <octavian.purdila@intel.com>
 
+	* cofflink.c (_bfd_coff_link_input_bfd): relocate AUX entries for
+	weak externals when generating relocatable objects
+
+2015-10-26  Octavian Purdila  <octavian.purdila@intel.com>
+
 	* cofflink.c: Move weak external relocation code to a new function
 	(_bfd_coff_relocate_weak_externals)
 	* cofflink.c (_bfd_coff_generic_relocate_section): Check if we

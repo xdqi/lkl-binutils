@@ -1,3 +1,8 @@
+2015-10-26 Octavian Purdila  <octavian.purdila@intel.com>
+
+	* obj-coff.c (coff_frob_symbol): propagate the type of external
+	weak symbol to its .weak. counterpart
+
 2015-07-21  Tristan Gingold  <gingold@adacore.com>
 
 	* configure: Regenerate.
