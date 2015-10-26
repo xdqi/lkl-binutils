@@ -368,6 +368,8 @@ extern int coff_count_linenumbers
   (bfd *) ATTRIBUTE_HIDDEN;
 extern bool coff_renumber_symbols
   (bfd *, int *) ATTRIBUTE_HIDDEN;
+extern void coff_nt_weak_to_local
+  (bfd *) ATTRIBUTE_HIDDEN;
 extern void coff_mangle_symbols
   (bfd *) ATTRIBUTE_HIDDEN;
 extern bool coff_write_symbols

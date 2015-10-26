@@ -890,6 +890,49 @@ coff_renumber_symbols (bfd *bfd_ptr, int *first_undef)
   return true;
 }
 
+/* Transform weak externals to local symbols if requested (e.g. objcopy). */
+void coff_nt_weak_to_local(bfd *abfd)
+{
+  unsigned int symbol_count = bfd_get_symcount (abfd);
+  asymbol **symbol_ptr_ptr = abfd->outsymbols;
+  unsigned int symbol_index;
+
+  for (symbol_index = 0; symbol_index < symbol_count; symbol_index++)
+    {
+      asymbol *symbol = symbol_ptr_ptr[symbol_index];
+      coff_symbol_type *coff_symbol_ptr;
+      combined_entry_type *native;
+      struct internal_syment *sym;
+
+      coff_symbol_ptr = coff_symbol_from (symbol);
+      if (!coff_symbol_ptr)
+        continue;
+
+      native = coff_symbol_ptr->native;
+      if (!native)
+        continue;
+
+      sym = &native->u.syment;
+
+      if ((symbol->flags & BSF_LOCAL) && sym->n_sclass == C_NT_WEAK
+	  && sym->n_numaux == 1) {
+        union internal_auxent *aux = &native[1].u.auxent;
+	struct internal_syment *wsym = &aux->x_sym.x_tagndx.p->u.syment;
+
+	if (!wsym) {
+	  symbol->flags &= BSF_LOCAL;
+	  continue;
+	}
+
+	symbol->flags &= ~BSF_WEAK;
+	symbol->value = wsym->n_value;
+	symbol->section = coff_section_from_bfd_index (abfd, wsym->n_scnum);
+	symbol->section->output_section = symbol->section;
+	sym->n_numaux = 0;
+      }
+    }
+}
+
 /* Run thorough the symbol table again, and fix it so that all
    pointers to entries are changed to the entries' index in the output
    symbol table.  */

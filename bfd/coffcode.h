@@ -4143,6 +4143,7 @@ coff_write_object_contents (bfd * abfd)
     {
       int firstundef;
 
+      coff_nt_weak_to_local(abfd);
       if (!coff_renumber_symbols (abfd, &firstundef))
 	return false;
       coff_mangle_symbols (abfd);

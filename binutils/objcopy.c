@@ -1725,7 +1725,17 @@ filter_symbols (bfd *abfd, bfd *obfd, asymbol **osyms,
 
       if (keep)
 	{
-	  if (!undefined
+	  if ((flags & BSF_GLOBAL) != 0
+	      && (weaken || is_specified_symbol (name, weaken_specific_htab)))
+	    {
+	      sym->flags &= ~ BSF_GLOBAL;
+	      sym->flags |= BSF_WEAK;
+	    }
+
+	  /* We want to check even undefined weak symbols in the case of PE,
+	   * since weak externals are classified as undefined. */
+	  if ((!undefined || (bfd_get_flavour (abfd) == bfd_target_coff_flavour &&
+			      startswith ((abfd)->xvec->name, "pe")))
 	      && (flags & (BSF_GLOBAL | BSF_WEAK))
 	      && (is_specified_symbol (name, localize_specific_htab)
 		  || (htab_elements (keepglobal_specific_htab) != 0
