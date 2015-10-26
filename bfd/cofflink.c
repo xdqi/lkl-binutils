@@ -1976,7 +1976,8 @@ _bfd_coff_link_input_bfd (struct coff_final_link_info *flaginfo, bfd *input_bfd)
       if ((*indexp < 0
 	   || (bfd_size_type) *indexp < syment_base)
 	  && (*sym_hash == NULL
-	      || (*sym_hash)->auxbfd != input_bfd))
+	      || (*sym_hash)->auxbfd != input_bfd)
+	  && isymp->n_sclass != C_NT_WEAK)
 	esym += add * isymesz;
       else
 	{
@@ -2046,8 +2047,15 @@ _bfd_coff_link_input_bfd (struct coff_final_link_info *flaginfo, bfd *input_bfd)
 		      auxp->x_file.x_n.x_n.x_offset = STRING_SIZE_SIZE + indx;
 		    }
 		}
-	      else if ((isymp->n_sclass != C_STAT || isymp->n_type != T_NULL)
-		       && isymp->n_sclass != C_NT_WEAK)
+	      else if (isymp->n_sclass == C_NT_WEAK)
+	        {
+		    unsigned int *tagndx = &auxp->x_sym.x_tagndx.u32;
+
+		    if (bfd_link_relocatable (flaginfo->info) &&
+			flaginfo->sym_indices[*tagndx] > 0)
+		      *tagndx = flaginfo->sym_indices[*tagndx];
+		}
+	      else if (isymp->n_sclass != C_STAT || isymp->n_type != T_NULL)
 		{
 		  unsigned long indx;
 
