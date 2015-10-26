@@ -1,3 +1,13 @@
+2015-10-26  octavian purdila  <octavian.purdila@intel.com>
+
+	* cofflink.c: Move weak external relocation code to a new function
+	(_bfd_coff_relocate_weak_externals)
+	* cofflink.c (_bfd_coff_generic_relocate_section): Check if we
+	need to relocate a weak external even if the symbol is undefined
+	* cofflink.c (coff_link_add_symbols): Fill in the class and aux
+	when adding a weak external over an undefined or weakly defined
+	symbol
+
 2015-07-21  Tristan Gingold  <gingold@adacore.com>
 
 	* version.m4: Bump version to 2.25.1
