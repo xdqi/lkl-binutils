@@ -1,5 +1,13 @@
 2015-10-26  octavian purdila  <octavian.purdila@intel.com>
 
+	* coffgen.c: add coff_nt_weak_to_local() that implements weak
+	external to local symbol conversion
+	* coffcode.h (coff_write_object_contents): call
+	coff_nt_weak_to_local()
+	* libcoff.h: add coff_nt_weak_to_local() declaration
+
+2015-10-26  Octavian Purdila <octavian.purdila@intel.com>
+
 	* cofflink.c (_bfd_coff_link_input_bfd): relocate AUX entries for
 	weak externals when generating relocatable objects
 

@@ -1,3 +1,9 @@
+2015-10-26  Octavian Purdila <octavian.purdila@intel.com>
+
+	* objcopy.c (filter_symbols): allow converting undefined weak
+	symbols to local symbols for PE objects (as PE weak externals are
+	implemented as undefined weak symbols)
+
 2015-07-21  Tristan Gingold  <gingold@adacore.com>
 
 	* configure: Regenerate.

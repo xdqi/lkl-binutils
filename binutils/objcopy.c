@@ -1336,7 +1336,10 @@ filter_symbols (bfd *abfd, bfd *obfd, asymbol **osyms,
 	      sym->flags |= BSF_WEAK;
 	    }
 
-	  if (!undefined
+	  /* We want to check even undefined weak symbols in the case of PE,
+	   * since weak externals are classified as undefined. */
+	  if ((!undefined || (bfd_get_flavour (abfd) == bfd_target_coff_flavour &&
+			      CONST_STRNEQ ((abfd)->xvec->name, "pe")))
 	      && (flags & (BSF_GLOBAL | BSF_WEAK))
 	      && (is_specified_symbol (name, localize_specific_htab)
 		  || (htab_elements (keepglobal_specific_htab) != 0

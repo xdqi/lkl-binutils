@@ -326,6 +326,8 @@ extern int coff_count_linenumbers
   (bfd *);
 extern struct coff_symbol_struct *coff_symbol_from
   (bfd *, asymbol *);
+extern void coff_nt_weak_to_local
+  (bfd *);
 extern bfd_boolean coff_renumber_symbols
   (bfd *, int *);
 extern void coff_mangle_symbols
