@@ -801,7 +801,12 @@ coff_renumber_symbols (bfd *bfd_ptr, int *first_undef)
   return TRUE;
 }
 
-/* Transform weak externals to local symbols if requested (e.g. objcopy). */
+/* Transform weak externals to local symbols if requested (e.g. objcopy).
+   When ld -r creates a relocatable object, the tagndx field in the weak
+   external's aux entry may point to the wrong symbol due to unrelocated
+   symbol indices.  We always search for the .weak. counterpart by name,
+   which is reliable, and only fall back to the tagndx pointer when no
+   .weak. match is found.  */
 void coff_nt_weak_to_local(bfd *abfd)
 {
   unsigned int symbol_count = bfd_get_symcount (abfd);
@@ -817,29 +822,85 @@ void coff_nt_weak_to_local(bfd *abfd)
 
       coff_symbol_ptr = coff_symbol_from (abfd, symbol);
       if (!coff_symbol_ptr)
-        continue;
+	continue;
 
       native = coff_symbol_ptr->native;
       if (!native)
-        continue;
+	continue;
 
       sym = &native->u.syment;
 
       if ((symbol->flags & BSF_LOCAL) && sym->n_sclass == C_NT_WEAK
 	  && sym->n_numaux == 1) {
-        union internal_auxent *aux = &native[1].u.auxent;
-	struct internal_syment *wsym = &aux->x_sym.x_tagndx.p->u.syment;
+	union internal_auxent *aux = &native[1].u.auxent;
+	const char *weakname = bfd_asymbol_name (symbol);
+	char leading = bfd_get_symbol_leading_char (abfd);
+	const char *stripped = weakname;
+	unsigned int j;
+	int found = 0;
 
-	if (!wsym) {
-	  symbol->flags &= BSF_LOCAL;
-	  continue;
-	}
+	if (leading && stripped[0] == leading)
+	  stripped++;
+	size_t nlen = strlen (stripped);
 
-	symbol->flags &= ~BSF_WEAK;
-	symbol->value = wsym->n_value;
-	symbol->section = coff_section_from_bfd_index (abfd, wsym->n_scnum);
-	symbol->section->output_section = symbol->section;
-	sym->n_numaux = 0;
+	/* Always search for the .weak. implementation by name.
+	   The tagndx field is unreliable after ld -r. */
+	for (j = 0; j < symbol_count; j++)
+	  {
+	    asymbol *wsym_ptr = symbol_ptr_ptr[j];
+	    const char *wname = bfd_asymbol_name (wsym_ptr);
+	    const char *wstripped = wname;
+	    size_t wslen;
+	    if (leading && wstripped[0] == leading)
+	      wstripped++;
+	    wslen = strlen (wstripped);
+	    /* .weak. symbols: ".weak.<stripped_name>.<tag>" */
+	    if (wslen > 6 + nlen + 1
+		&& strncmp (wstripped, ".weak.", 6) == 0
+		&& wstripped[6 + nlen] == '.'
+		&& strncmp (wstripped + 6, stripped, nlen) == 0)
+	      {
+		asection *s = bfd_get_section (wsym_ptr);
+		if (s && (s->flags & SEC_CODE))
+		  {
+		    symbol->value = bfd_asymbol_value (wsym_ptr);
+		    symbol->section = s;
+		    symbol->section->output_section = s;
+		    symbol->flags &= ~BSF_WEAK;
+		    sym->n_numaux = 0;
+		    found = 1;
+		    break;
+		  }
+	      }
+	  }
+
+	if (!found)
+	  {
+	    /* No .weak. code counterpart found by name; check if the
+	       tagndx pointer points somewhere usable. */
+	    struct internal_syment *wsym;
+	    asection *wsec;
+
+	    wsym = &aux->x_sym.x_tagndx.p->u.syment;
+	    wsec = coff_section_from_bfd_index (abfd, wsym->n_scnum);
+
+	    if (wsec && wsec != bfd_abs_section_ptr
+		&& !bfd_is_und_section (wsec)
+		&& !bfd_is_com_section (wsec)
+		&& (wsec->flags & SEC_CODE))
+	      {
+		symbol->flags &= ~BSF_WEAK;
+		symbol->value = wsym->n_value;
+		symbol->section = wsec;
+		symbol->section->output_section = wsec;
+		sym->n_numaux = 0;
+	      }
+	    else
+	      {
+		/* No usable target; just mark local */
+		symbol->flags &= BSF_LOCAL;
+	      }
+	  }
       }
     }
 }
